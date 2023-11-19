@@ -40,6 +40,7 @@ string getResult(string password, string confString, string result) {
     while (result.find(confString) == string::npos) {
         trys += 500;
         result = PBKDF2(password, confString, trys);
+        //printf("resultado %d, : %s          !!!!!!!!!!!!!!!!!!!!!!!!!!", trys, result.c_str());
     }
     return result;
 }
@@ -65,12 +66,8 @@ int main() {
         password = PBKDF2(password, confString, index + password.length()).substr(index);
         final += getResult(password, confString, result);
     }
+    printf("resultado , : %s ",final.c_str());
 
-    stringstream ss;
-    for(int i = 0; i < final.length(); ++i)
-        ss << hex << setw(2) << setfill('0') << (int)final[i];
-    
-    cout << ss.str() << endl;
 
     return 0;
 }
