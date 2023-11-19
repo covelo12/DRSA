@@ -15,7 +15,9 @@ std::string string_to_hex_utf8(const std::string& input) {
     }
     return oss.str();
 }
+
 string PBKDF2(string password, string salt, int keylen) {
+
     unsigned char key[keylen];
     PKCS5_PBKDF2_HMAC_SHA1(password.c_str(), password.length(), (unsigned char *)salt.c_str(), salt.length(), 1000, keylen, key);
     
@@ -24,28 +26,33 @@ string PBKDF2(string password, string salt, int keylen) {
         ss << hex << setw(2) << setfill('0') << (int)key[i];
     
     string s =ss.str();
+
+    //printf("Primeira %s                               !!!!", s.c_str());
     return s;
 }
 
 
 int getIndex(string confString, string result) {
     size_t i = 0;
-    while (result.substr(i, confString.length()) != confString) {
+    while (i < result.size() && result.substr(i, confString.length()) != confString) {
         i++;
     }
     return i + confString.length();
 }
+
 string getResult(string password, string confString, string result) {
     int trys = 1000;
-    while (result.find(confString) == string::npos) {
+    string aux = string_to_hex_utf8(confString);
+    while (result.find(aux) == string::npos) {
         trys += 500;
         result = PBKDF2(password, confString, trys);
-        //printf("resultado %d, : %s          !!!!!!!!!!!!!!!!!!!!!!!!!!", trys, result.c_str());
     }
     return result;
 }
 
 int main() {
+
+    
     int iterations;
     string password, confString;
     cout << "Number of iterations ";
@@ -56,8 +63,6 @@ int main() {
     cin >> confString;
 
     string final = "", result = "";
-    confString =string_to_hex_utf8(confString);
-    password =string_to_hex_utf8(password);
 
     for (int k = 0; k < iterations; k++) {
         result = getResult(password, confString, result);
@@ -67,7 +72,6 @@ int main() {
         final += getResult(password, confString, result);
     }
     printf("resultado , : %s ",final.c_str());
-
 
     return 0;
 }
