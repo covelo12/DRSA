@@ -7,6 +7,14 @@
 
 using namespace std;
 
+
+std::string string_to_hex_utf8(const std::string& input) {
+    std::ostringstream oss;
+    for (const char& c : input) {
+        oss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(static_cast<unsigned char>(c));
+    }
+    return oss.str();
+}
 string PBKDF2(string password, string salt, int keylen) {
     unsigned char key[keylen];
     PKCS5_PBKDF2_HMAC_SHA1(password.c_str(), password.length(), (unsigned char *)salt.c_str(), salt.length(), 1000, keylen, key);
@@ -15,7 +23,8 @@ string PBKDF2(string password, string salt, int keylen) {
     for(int i = 0; i < keylen; ++i)
         ss << hex << setw(2) << setfill('0') << (int)key[i];
     
-    return ss.str();
+    string s =ss.str();
+    return s;
 }
 
 
@@ -46,7 +55,8 @@ int main() {
     cin >> confString;
 
     string final = "", result = "";
-
+    confString =string_to_hex_utf8(confString);
+    password =string_to_hex_utf8(password);
 
     for (int k = 0; k < iterations; k++) {
         result = getResult(password, confString, result);
