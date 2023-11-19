@@ -15,7 +15,7 @@ def getResult(password, confString, result):
     trys = 1000
     while ( str(confString.hex()) not in  str(result.hex()) ):
         trys = trys + 500
-        result = PBKDF2(password, confString, trys, 1000, hmac_hash_module=SHA1)
+        result = PBKDF2(password, confString, trys, 1000, hmac_hash_module=SHA512)
     return result
 
 iterations = int(input("Number of iterations "))
