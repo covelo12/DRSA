@@ -34,9 +34,8 @@ def random_gen(pwd,salt,len):
     return key
 
 iterations = int(input("Number of iterations "))
-password = input("Password ")
-confString = input("Confusion String ").encode()
-#confString = "13".encode()
+password = input("Password ").encode("utf-8")
+confString = input("Confusion String ").encode("utf-8")
 
 final=b''
 result = b''
