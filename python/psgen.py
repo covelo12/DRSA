@@ -22,8 +22,6 @@ def getResult(password, confString, result):
     return result
 
 def random_gen(pwd,salt,len):
-    if(isinstance(pwd, str)):
-        pwd = pwd.encode()
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA1(),
         length=len,
@@ -31,11 +29,13 @@ def random_gen(pwd,salt,len):
         iterations=1000,
     )
     key = kdf.derive( pwd )
+    #print("primeiro: ", str(key.hex()))
     return key
 
 iterations = int(input("Number of iterations "))
 password = input("Password ").encode("utf-8")
 confString = input("Confusion String ").encode("utf-8")
+
 
 final=b''
 result = b''
