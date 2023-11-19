@@ -1,6 +1,9 @@
-from Crypto.Protocol.KDF import PBKDF2
+from cryptography . hazmat . primitives . kdf . pbkdf2 import PBKDF2HMAC
 from Crypto.Hash import SHA512
 from Crypto.Random import get_random_bytes
+from cryptography . hazmat . primitives import hashes
+
+
 
 
 #Returns the index right after the confusion string and the result are equal
@@ -15,8 +18,20 @@ def getResult(password, confString, result):
     trys = 1000
     while ( str(confString.hex()) not in  str(result.hex()) ):
         trys = trys + 500
-        result = PBKDF2(password, confString, trys, 1000, hmac_hash_module=SHA512)
+        result = random_gen(password,confString,trys)
     return result
+
+def random_gen(pwd,salt,len):
+    if(isinstance(pwd, str)):
+        pwd = pwd.encode()
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA1(),
+        length=len,
+        salt=salt,
+        iterations=1000,
+    )
+    key = kdf.derive( pwd )
+    return key
 
 iterations = int(input("Number of iterations "))
 password = input("Password ")
@@ -30,6 +45,6 @@ for(k) in range(0, iterations):
     result= getResult(password,confString,result) 
     index=  getIndex(confString, result)
     final+= result[:index+1]
-    password = PBKDF2(password, confString, index+len(password), 1000, hmac_hash_module=SHA512)[index:]
+    password=random_gen(password, confString,index+len(password))[index:]
     final+= getResult(password,confString,result)
 print(final.hex())
