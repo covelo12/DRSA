@@ -4,8 +4,13 @@
 #include <iomanip>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+#include <cmath>
+#include <vector>
+#include <boost/multiprecision/cpp_int.hpp>
+#include <boost/multiprecision/miller_rabin.hpp>
 
 using namespace std;
+namespace mp = boost::multiprecision;
 
 
 std::string string_to_hex_utf8(const std::string& input) {
@@ -50,6 +55,34 @@ string getResult(string password, string confString, string result) {
     return result;
 }
 
+int generate_prime_from_bytes(std::string random_bytes) {
+    mp::cpp_int candidate_prime = 0;
+    for (char c : random_bytes)
+        candidate_prime = (candidate_prime << 8) | static_cast<int>(c);
+    if (candidate_prime % 2 == 0)
+        candidate_prime += 1;
+
+    while (!mp::miller_rabin_test(candidate_prime, 25)) {
+        candidate_prime += 2;
+        std::cout << "A" << std::endl;
+    }
+    return candidate_prime.convert_to<int>();
+}
+
+void keygen(std::string keystream) {
+    std::string key1 = keystream.substr(0, keystream.size()/2);
+    std::string key2 = keystream.substr(keystream.size()/2);
+
+    int p = generate_prime_from_bytes(key1);
+    int q = generate_prime_from_bytes(key2);
+
+    int n = p * q;
+
+    int e = pow(2, 16) + 1;
+
+    std::cout << "deu" << std::endl;
+}
+
 int main() {
 
     
@@ -71,7 +104,8 @@ int main() {
         password = PBKDF2(password, confString, index + password.length()).substr(index);
         final += getResult(password, confString, result);
     }
-    printf("resultado , : %s ",final.c_str());
+    //printf("resultado , : %s ",final.c_str());
+    keygen(final);
 
     return 0;
 }
