@@ -22,7 +22,9 @@ std::string string_to_hex_utf8(const std::string& input) {
 }
 
 string PBKDF2(string password, string salt, int keylen) {
-
+    //printf("password  %s \n",password.c_str());
+    //printf("salt  %s \n",salt.c_str());
+    //printf("leng %d",keylen);
     unsigned char key[keylen];
     PKCS5_PBKDF2_HMAC_SHA1(password.c_str(), password.length(), (unsigned char *)salt.c_str(), salt.length(), 1000, keylen, key);
     
@@ -45,10 +47,12 @@ int getIndex(string confString, string result) {
     return i + confString.length();
 }
 
-string getResult(string password, string confString, string result) {
+string getResult(string password, string confString) {
+    string result="";
+
     int trys = 1000;
-    string aux = string_to_hex_utf8(confString);
-    while (result.find(aux) == string::npos) {
+    //string aux = string_to_hex_utf8(confString);
+    while (result.find(confString) == string::npos) {
         trys += 500;
         result = PBKDF2(password, confString, trys);
     }
@@ -56,6 +60,7 @@ string getResult(string password, string confString, string result) {
 }
 
 int generate_prime_from_bytes(std::string random_bytes) {
+
     mp::cpp_int candidate_prime = 0;
     for (char c : random_bytes)
         candidate_prime = (candidate_prime << 8) | static_cast<int>(c);
@@ -70,8 +75,10 @@ int generate_prime_from_bytes(std::string random_bytes) {
 }
 
 void keygen(std::string keystream) {
-    std::string key1 = keystream.substr(0, keystream.size()/2);
-    std::string key2 = keystream.substr(keystream.size()/2);
+    std::string::size_type leng = keystream.length();
+    std::string key1 = keystream.substr(0, leng);
+    std::string key2 = keystream.substr(leng);
+
 
     int p = generate_prime_from_bytes(key1);
     int q = generate_prime_from_bytes(key2);
@@ -88,24 +95,48 @@ int main() {
     
     int iterations;
     string password, confString;
-    cout << "Number of iterations ";
-    cin >> iterations;
-    cout << "Password ";
-    cin >> password;
-    cout << "Confusion String ";
-    cin >> confString;
+
+    //cout << " ";
+    //cin >> iterations;
+    //cout << "Password ";
+    //cin >> password;
+    //cout << "Confusion String ";
+    //cin >> confString;
 
     string final = "", result = "";
+    password="ricardo";
+    confString="H";
+    iterations=4;
 
-    for (int k = 0; k < iterations; k++) {
-        result = getResult(password, confString, result);
-        int index = getIndex(confString, result);
-        final += result.substr(0, index + 1);
-        password = PBKDF2(password, confString, index + password.length()).substr(index);
-        final += getResult(password, confString, result);
+    
+    password=string_to_hex_utf8(password);
+    confString=string_to_hex_utf8(confString);
+    
+    // Use printf to print the string
+
+
+    //printf("ConfString %s", confString.c_str());
+    result=getResult(password,confString);
+    
+    //printf("resultado , : %s ",result.c_str()); //done1
+    int index = getIndex(confString, result);
+    //printf("index %d",index); done 2
+    final += result.substr(0, index + 1);
+
+    //std::cout << "resultado, : " << final << std::endl; //done3
+    for (int k = 1; k < iterations; k++) {
+        //printf("password %s, e confstring %s", password.c_str(), confString.c_str());
+        password = PBKDF2(password, confString, index + password.length()).substr(0,password.size());
+        //printf("passwrod %s \n", password.c_str()); done 4
+
+        result=getResult(password,confString);
+        index=getIndex(confString,result);
+        final += result.substr(0,index);
     }
-    //printf("resultado , : %s ",final.c_str());
-    keygen(final);
+    
+    int leng = final.length();
+    printf("final: %s",final.c_str());
+    //keygen(final);
 
     return 0;
 }

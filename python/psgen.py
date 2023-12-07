@@ -8,61 +8,72 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 
 #Returns the index right after the confusion string and the result are equal
 def getIndex( confString, result): 
-    leng= len(confString.hex())
+
+    leng= len(confString)
     i = 0
-    while (str(result.hex())[i:i+leng] != str(confString.hex())):
+    while (result[i:i+leng] != confString):
         i = i + 1
     return i+leng
 
 def getResult(password, confString):
-    result=b''
+    result=""
     trys = 1000
-    while ( str(confString.hex()) not in  str(result.hex()) ):
+    while (confString not in  result ):
         trys = trys + 500
         result = random_gen(password,confString,trys)
     return result
 
 def random_gen(pwd,salt,len):
+    #print("password"+ pwd)
+    #print("salt"+ salt)
+    #print(len)
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA1(),
         length=len,
-        salt=salt,
+        salt=salt.encode("utf-8"),
         iterations=1000,
     )
-    key = kdf.derive( pwd )
-    #print("primeiro: ", str(key.hex()))
-    return key
+    key = kdf.derive(pwd.encode("utf-"))
+
+    #print("primeiro:", key.hex())
+    return key.hex()
 
 def psgen(password,confString,iterations):
 
-    password = password.encode("utf-8")
-    confString = confString.encode("utf-8")
+    password = password.encode("utf-8").hex()
+    confString = confString.encode("utf-8").hex()
 
+    final=""
+    result = ""
 
-    final=b''
-    result = b''
-
-    result= getResult(password,confString) 
+    result= getResult(password,confString)
+    #print(result) #done 1
     index=  getIndex(confString, result)
-    final= final + result[:index+1]
+    #print(index) #done 2
+    final+= result[:index+1]
+    #print(final) #done 3
     for(k) in range(1, iterations):   
-        password=random_gen(password, confString,index+len(password))[index:]
+        password=random_gen(password, confString,index+len(password))[:int(len(password))]
+        #print(password) done 4
         result =getResult(password,confString)
         index= getIndex(confString, result)
-        final= final + result[:index+1]
+        final= final + result[:index]
+
+    print(final)
     return final
 
-
 def generate_prime_from_bytes(random_bytes):
-    candidate_prime = number.bytes_to_long(random_bytes)
-    #print(number.size(candidate_prime))
+    candidate_prime = 0
+    for c in random_bytes:
+        candidate_prime = (candidate_prime << 8) | ord(c)
     if candidate_prime % 2 == 0:
-       candidate_prime = candidate_prime+ 1
+        candidate_prime += 1
+
     while not number.isPrime(candidate_prime):
-       candidate_prime = candidate_prime+ 2
+        candidate_prime += 2
+
     return candidate_prime
     
-
 def keygen(keystream):
     leng=int(len(keystream))
     leng= leng//2
@@ -70,13 +81,12 @@ def keygen(keystream):
     key1= keystream[:leng]
     key2= keystream[leng:]
 
+
     p= generate_prime_from_bytes(key1)
     q= generate_prime_from_bytes(key2)
 
 
     return p,q
-
-
 
 def generate_pem_files(p, q, private_pem_filename="private.pem", public_pem_filename="public.pem"):
     # Calculate n (modulus)
@@ -122,10 +132,7 @@ def generate_pem_files(p, q, private_pem_filename="private.pem", public_pem_file
     with open(public_pem_filename, 'wb') as pem_file:
         pem_file.write(public_pem_data)
 
-
-
-random_bytes=psgen("asda","l",2)
-print(len(random_bytes))
-p,q=keygen(random_bytes)
-generate_pem_files(p,q)
+random_bytes=psgen("ricardo","H",4)
+#p,q=keygen(random_bytes)
+#generate_pem_files(p,q)
 
