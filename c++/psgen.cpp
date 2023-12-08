@@ -9,6 +9,7 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/multiprecision/miller_rabin.hpp>
 
+
 using namespace std;
 namespace mp = boost::multiprecision;
 
@@ -59,8 +60,8 @@ string getResult(string password, string confString) {
     return result;
 }
 
-int generate_prime_from_bytes(std::string random_bytes) {
-
+mp::cpp_int generate_prime_from_bytes(std::string random_bytes) {
+    
     mp::cpp_int candidate_prime = 0;
     for (char c : random_bytes)
         candidate_prime = (candidate_prime << 8) | static_cast<int>(c);
@@ -69,30 +70,34 @@ int generate_prime_from_bytes(std::string random_bytes) {
 
     while (!mp::miller_rabin_test(candidate_prime, 25)) {
         candidate_prime += 2;
-        std::cout << "A" << std::endl;
     }
-    return candidate_prime.convert_to<int>();
+    std::cout << "Prime: " << candidate_prime.convert_to<int>() << std::endl;
+    return candidate_prime;
 }
 
 void keygen(std::string keystream) {
-    std::string::size_type leng = keystream.length();
-    std::string key1 = keystream.substr(0, leng);
-    std::string key2 = keystream.substr(leng);
+    int leng = keystream.length();
+    int leng_half = leng / 2;
+    std::string key1 = keystream.substr(0, leng_half);
+    std::string key2 = keystream.substr(leng_half);
+    //printf("key 1 %s \n", key1.c_str()); //done 1
+    //printf("key 2 %s \n", key2.c_str()); //done 2
 
 
-    int p = generate_prime_from_bytes(key1);
-    int q = generate_prime_from_bytes(key2);
+    mp::cpp_int p = generate_prime_from_bytes(key1); 
+    mp::cpp_int q = generate_prime_from_bytes(key2);
 
-    int n = p * q;
+    //printf("q %d \n", q);
+    //printf("p %d \n", p);
+    mp::cpp_int n = p * q;
 
-    int e = pow(2, 16) + 1;
+    long e = pow(2, 16) + 1;
 
-    std::cout << "deu" << std::endl;
 }
 
 int main() {
 
-    
+
     int iterations;
     string password, confString;
 
@@ -107,14 +112,12 @@ int main() {
     password="ricardo";
     confString="H";
     iterations=4;
-
-    
     password=string_to_hex_utf8(password);
     confString=string_to_hex_utf8(confString);
     
     // Use printf to print the string
 
-
+    
     //printf("ConfString %s", confString.c_str());
     result=getResult(password,confString);
     
@@ -133,10 +136,9 @@ int main() {
         index=getIndex(confString,result);
         final += result.substr(0,index);
     }
-    
-    int leng = final.length();
-    printf("final: %s",final.c_str());
-    //keygen(final);
+
+    //printf("final: %s",final.c_str()); done 4
+    keygen(final);
 
     return 0;
 }

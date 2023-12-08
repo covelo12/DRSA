@@ -59,7 +59,6 @@ def psgen(password,confString,iterations):
         index= getIndex(confString, result)
         final= final + result[:index]
 
-    print(final)
     return final
 
 def generate_prime_from_bytes(random_bytes):
@@ -80,10 +79,13 @@ def keygen(keystream):
     #print(leng)
     key1= keystream[:leng]
     key2= keystream[leng:]
-
+    #print("key 1" + key1 +"\n") #done 1
+    #print("key 2" + key2 + "\n") #done 2
 
     p= generate_prime_from_bytes(key1)
     q= generate_prime_from_bytes(key2)
+    print("q "+str(q))
+    print("p "+str(p))
 
 
     return p,q
@@ -133,6 +135,6 @@ def generate_pem_files(p, q, private_pem_filename="private.pem", public_pem_file
         pem_file.write(public_pem_data)
 
 random_bytes=psgen("ricardo","H",4)
-#p,q=keygen(random_bytes)
-#generate_pem_files(p,q)
+p,q=keygen(random_bytes)
+generate_pem_files(p,q)
 
