@@ -1,21 +1,21 @@
-//g++ -o Output psgen.cpp -lcrypto -I/mnt/c/Users/ricardo/Desktop/Uni/CA/vcpkg/installed/x64-linux/include/cryptopp
+// Todo testar em VM
+
 #include <iostream>
 #include <string>
 #include <sstream>
 #include <iomanip>
 #include <openssl/evp.h>
-// #include <openssl/rand.h>
+#include <openssl/rsa.h>
 #include <cmath>
 #include <vector>
 #include <boost/multiprecision/cpp_int.hpp>
 using boost::multiprecision::cpp_int;
 #include <boost/multiprecision/miller_rabin.hpp>
-#include "Cryptopp/files.h" // Include for file operations
-#include "Cryptopp/rsa.h"
-#include "Cryptopp/integer.h"
-#include "Cryptopp/osrng.h"
-#include "Cryptopp/pem.h"
-#include "Cryptopp/pem_write.cpp"
+#include <cryptopp/files.h>
+#include <cryptopp/rsa.h>
+#include <cryptopp/integer.h>
+#include <cryptopp/osrng.h>
+#include <cryptopp/pem.h>
 
 
 using namespace std;
@@ -54,7 +54,6 @@ std::string string_to_hex_utf8(const std::string& input) {
     }
     return oss.str();
 }
-
 string PBKDF2(string password, string salt, int keylen) {
     //printf("password  %s \n",password.c_str());
     //printf("salt  %s \n",salt.c_str());
@@ -71,8 +70,6 @@ string PBKDF2(string password, string salt, int keylen) {
     //printf("Primeira %s                               !!!!", s.c_str());
     return "AAAAAaa";
 }
-
-
 int getIndex(string confString, string result) {
     size_t i = 0;
     while (i < result.size() && result.substr(i, confString.length()) != confString) {
@@ -123,6 +120,7 @@ void keygen(std::string keystream) {
     mp::cpp_int n = p * q;
 
     long e = pow(2, 16) + 1;
+    
 
     cpp_int phi = (p - 1) * (q - 1);
     cpp_int d = modInverse(e, phi);
@@ -134,14 +132,17 @@ void keygen(std::string keystream) {
     // Initializing RSA Private Key
     CryptoPP::RSA::PrivateKey privKey;
     privKey.Initialize(crypto_n, crypto_e, crypto_d);
+    
+    CryptoPP::ByteQueue queue;
+    privKey.Save(queue);
+    //pubKey.Save(queue);
 
-    // Initializing RSA Public Key
-    CryptoPP::RSA::PublicKey pubKey;
-    pubKey.Initialize(crypto_n, crypto_e);
+    // Convert DER formatted keys to PEM
+    CryptoPP::FileSink fs16("priv.pem");
+    PEM_Save(fs16,privKey);
 
-    // Save the keys to files
-    //FileSink fs16("pub.pem", true);
-    //PEM_Save(fs16,pubKey);
+    //CryptoPP::FileSink pubFile("public.pem");
+    //CryptoPP::PEM_Save(pubFile, pubKey);
 }
 
 int main() {
