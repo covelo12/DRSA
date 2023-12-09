@@ -1,22 +1,9 @@
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
+import base64
 
-# Generate key pair
-private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-public_key = private_key.public_key()
-
-# No private key encryption
-pem_private = private_key.private_bytes(
-    encoding=serialization.Encoding.PEM,
-    format=serialization.PrivateFormat.TraditionalOpenSSL,
-    encryption_algorithm=serialization.NoEncryption()
-)
-
-# The private key is encrypted with AES+CBC and a key derived from the password "senha"
-pem_private_encrypted = private_key.private_bytes(
-    encoding=serialization.Encoding.PEM,
-    format=serialization.PrivateFormat.PKCS8,
-    encryption_algorithm=serialization.NoEncryption()
-)
+a ="MIIB7TANBgkqhkiG9w0BAQEFAAOCAdoAMIIB1QKCAcwU0k5KIHovQC8pqbpUW5RvJZnD1v2in0Pi31X++NtY90/YPasMNTB1w+Lo3cQzqPCNLnCVgoJcma0MryQDdMdY7w/UDXNEdY5c06GkJFDOar6+l3bKbsnULb7xQrS8sky4I4XaAuKqd9Uup6pNIj1sL1FK+Rde1k53/ptQgFWusd/zFB8tB0a6zn883nBkl/z5/CTXuQEsl3hcYNzD5bHk7fXwbOH6s+ZfMEMukU0WOVpvKcZ1kJiJ38rlcSdad1NTjXjhvBWoG/Ym03YE9oybW0QtGXMQa/2c/HbhhBXPHaKNTBdbPMQSJndBFbSDcqnaUuOG0YUpplC9WqcsCamJWBU/url8OBK3j0dqFYHgDnXUJj+QSywuIQmlKnnlpxEWDKtmLMgzen0FqI9AwEsfqhbLsfn7hip+AD4FGlzz2MGVqQYgoZctWPOgtit8UyDO3oX9muzxIpX+nhCtdPcW7wfcQIsCrJWygDH8/SKQcDsL/ZgbGfE+lj9OnVhO6rBnqQLN+yeWDWDANdht8a/0T/RJD33fhD+terYEKJLaBZF9v8h6/scMCrzkiZp/emNYy1v4B+LV26bJFooJzLYm9RsSLdODWX7q4e65AgMBAAE="
+b=base64.b64decode("utf-8")
+print(b)
 
