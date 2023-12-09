@@ -5,6 +5,7 @@ import sympy
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+import base64
 
 #Returns the index right after the confusion string and the result are equal
 def getIndex( confString, result): 
@@ -42,7 +43,8 @@ def psgen(password,confString,iterations):
 
     password = password.encode("utf-8").hex()
     confString = confString.encode("utf-8").hex()
-
+    print(password)
+    print(confString)
     final=""
     result = ""
 
@@ -84,8 +86,8 @@ def keygen(keystream):
 
     p= generate_prime_from_bytes(key1)
     q= generate_prime_from_bytes(key2)
-    print("q "+str(q))
-    print("p "+str(p))
+    #print("q "+str(q))
+    #print("p "+str(p))
 
 
     return p,q
@@ -108,6 +110,13 @@ def generate_pem_files(p, q, private_pem_filename="private.pem", public_pem_file
         p=p, q=q, d=d, dmp1=d%(p-1), dmq1=d%(q-1), iqmp=rsa.rsa_crt_iqmp(p, q),
         public_numbers=rsa.RSAPublicNumbers(e=e, n=n)
     )
+
+    integer_bytes = e.to_bytes((e.bit_length() + 7) // 8, byteorder='big')
+    encoded_bytes = base64.b64encode(integer_bytes)
+    encoded_string = encoded_bytes.decode('utf-8')
+
+
+
     private_key = private_numbers.private_key(default_backend())
 
     # Serialize the private key to PEM format
@@ -136,5 +145,6 @@ def generate_pem_files(p, q, private_pem_filename="private.pem", public_pem_file
 
 random_bytes=psgen("ricardo","H",4)
 p,q=keygen(random_bytes)
+
 generate_pem_files(p,q)
 
