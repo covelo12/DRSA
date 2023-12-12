@@ -157,7 +157,7 @@ string PBKDF2(string password, string salt, int keylen) {
     //printf("salt  %s \n",salt.c_str());
     //printf("leng %d",keylen);
     unsigned char key[keylen];
-    PKCS5_PBKDF2_HMAC_SHA1(password.c_str(), password.length(), (unsigned char *)salt.c_str(), salt.length(), 1000, keylen, key);
+    PKCS5_PBKDF2_HMAC_SHA1(password.c_str(), password.length(), (unsigned char *)salt.c_str(), salt.length(), 10, keylen, key);
     
     stringstream ss;
     for(int i = 0; i < keylen; ++i)
@@ -217,10 +217,8 @@ void keygen(std::string keystream) {
 
     cpp_int phi = (p - 1) * (q - 1);
     cpp_int d = modInverse(e, phi);
-
+    cout << "d \n" << d << endl;
     std::string n_base64 = to_base64(n);
-    cout << "N"<< p <<endl;
-    printf("B64n %s \n", n_base64.c_str());
     std::string e_base64 = to_base64(e);
     std::string d_base64 = to_base64(d);
 
@@ -228,47 +226,53 @@ void keygen(std::string keystream) {
     write_RSA_PEM(n_base64.c_str(), e_base64.c_str(), "public.pem");
     write_RSA_PEM(n_base64.c_str(), d_base64.c_str(), "private.pem");
 }
-int main() {
+
+    string randgen(string password, string confString, int iterations){
+        string final = "", result = "";
+        password=string_to_hex_utf8(password);
+        confString=string_to_hex_utf8(confString);
+        // Use printf to print the string
+
+
+        //printf("ConfString %s", confString.c_str());
+        result=getResult(password,confString);
+        //printf("resultado , : %s ",result.c_str()); //done1
+        int index = getIndex(confString, result);
+        //printf("confString %s \n", confString.c_str());
+        //printf("result %s \n ",result.substr(0, index).c_str()); //done 2
+        final += result.substr(0, index);
+        //std::cout << "resultado, : " << final << std::endl; //done3
+        for (int k = 1; k < iterations; k++) {
+            //printf("password %s, e confstring %s", password.c_str(), confString.c_str());
+            password = PBKDF2(password, confString, index + password.length()).substr(0,password.size());
+            //printf("passwrod %s \n", password.c_str()); //done 4
+
+            result=getResult(password,confString);
+            index=getIndex(confString,result);
+            final += result.substr(0,index);
+        }
+        return final;
+}
+
+int keygeneration() {
 
 
     int iterations;
     string password, confString;
 
     
-    //cout << " ";
-    //cin >> iterations;
-    //cout << "Password ";
-    //cin >> password;
-    //cout << "Confusion String ";
-    //cin >> confString;
 
-    string final = "", result = "";
-    password="ricardo";
-    confString="H";
-    iterations=4;
-    password=string_to_hex_utf8(password);
-    confString=string_to_hex_utf8(confString);
-    // Use printf to print the string
+    cout << "Password ";
+    cin >> password;
+    cout << "Confusion String ";
+    cin >> confString;
+    cout << "Iterarions ";
+    cin >> iterations;
 
-
-    //printf("ConfString %s", confString.c_str());
-    result=getResult(password,confString);
-    //printf("resultado , : %s ",result.c_str()); //done1
-    int index = getIndex(confString, result);
-    //printf("index %d",index); done 2
-    final += result.substr(0, index + 1);
-    //std::cout << "resultado, : " << final << std::endl; //done3
-    for (int k = 1; k < iterations; k++) {
-        //printf("password %s, e confstring %s", password.c_str(), confString.c_str());
-        password = PBKDF2(password, confString, index + password.length()).substr(0,password.size());
-        //printf("passwrod %s \n", password.c_str()); done 4
-
-        result=getResult(password,confString);
-        index=getIndex(confString,result);
-        final += result.substr(0,index);
-    }
-
-    //printf("final: %s",final.c_str()); done 4
+    
+    string final  = randgen(password, confString, iterations);
+    
+    //printf("final: %s",final.c_str()); //done 4
     keygen(final);
 
     return 0;

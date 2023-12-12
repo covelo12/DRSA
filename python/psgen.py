@@ -32,7 +32,7 @@ def random_gen(pwd,salt,len):
         algorithm=hashes.SHA1(),
         length=len,
         salt=salt.encode("utf-8"),
-        iterations=1000,
+        iterations=10,
     )
     key = kdf.derive(pwd.encode("utf-"))
 
@@ -43,8 +43,6 @@ def psgen(password,confString,iterations):
 
     password = password.encode("utf-8").hex()
     confString = confString.encode("utf-8").hex()
-    print(password)
-    print(confString)
     final=""
     result = ""
 
@@ -52,7 +50,7 @@ def psgen(password,confString,iterations):
     #print(result) #done 1
     index=  getIndex(confString, result)
     #print(index) #done 2
-    final+= result[:index+1]
+    final+= result[:index]
     #print(final) #done 3
     for(k) in range(1, iterations):   
         password=random_gen(password, confString,index+len(password))[:int(len(password))]
@@ -97,13 +95,13 @@ def generate_pem_files(p, q, private_pem_filename="private.pem", public_pem_file
     n = p * q
 
     # Public exponent
-    e = 2**16 + 1
+    e = pow(2,16) + 1
 
     # Calculate phi(n)
     phi = (p - 1) * (q - 1)
-
     # Calculate the private exponent
     d = pow(e, -1, phi)
+    #print(d)
 
     # Generate the private key
     private_numbers = rsa.RSAPrivateNumbers(
@@ -143,8 +141,8 @@ def generate_pem_files(p, q, private_pem_filename="private.pem", public_pem_file
     with open(public_pem_filename, 'wb') as pem_file:
         pem_file.write(public_pem_data)
 
-random_bytes=psgen("ricardo","H",4)
-p,q=keygen(random_bytes)
-
-generate_pem_files(p,q)
+#random_bytes=psgen("password","nop",1)
+#p,q=keygen(random_bytes)
+#
+#generate_pem_files(p,q)
 
