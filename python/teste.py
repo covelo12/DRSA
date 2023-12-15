@@ -1,9 +1,20 @@
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
-import base64
+class StreamCipher:
+    def __init__(self, seed):
+        self.state = seed
 
-a ="MIIB7TANBgkqhkiG9w0BAQEFAAOCAdoAMIIB1QKCAcwU0k5KIHovQC8pqbpUW5RvJZnD1v2in0Pi31X++NtY90/YPasMNTB1w+Lo3cQzqPCNLnCVgoJcma0MryQDdMdY7w/UDXNEdY5c06GkJFDOar6+l3bKbsnULb7xQrS8sky4I4XaAuKqd9Uup6pNIj1sL1FK+Rde1k53/ptQgFWusd/zFB8tB0a6zn883nBkl/z5/CTXuQEsl3hcYNzD5bHk7fXwbOH6s+ZfMEMukU0WOVpvKcZ1kJiJ38rlcSdad1NTjXjhvBWoG/Ym03YE9oybW0QtGXMQa/2c/HbhhBXPHaKNTBdbPMQSJndBFbSDcqnaUuOG0YUpplC9WqcsCamJWBU/url8OBK3j0dqFYHgDnXUJj+QSywuIQmlKnnlpxEWDKtmLMgzen0FqI9AwEsfqhbLsfn7hip+AD4FGlzz2MGVqQYgoZctWPOgtit8UyDO3oX9muzxIpX+nhCtdPcW7wfcQIsCrJWygDH8/SKQcDsL/ZgbGfE+lj9OnVhO6rBnqQLN+yeWDWDANdht8a/0T/RJD33fhD+terYEKJLaBZF9v8h6/scMCrzkiZp/emNYy1v4B+LV26bJFooJzLYm9RsSLdODWX7q4e65AgMBAAE="
-b=base64.b64decode("utf-8")
-print(b)
+    # LCG parameters
+    a = 1664525
+    c = 1013904223
+    m = 2**32  # 4294967296
 
+    def next_byte(self):
+        # Generate a pseudo-random byte
+        self.state = (self.a * self.state + self.c) % self.m
+        return self.state >> 24  # Return the top 8 bits
+
+# Example usage
+cipher = StreamCipher(12345)  # Seed for the generator
+
+# Generate 10 bytes of keystream
+keystream = [cipher.next_byte() for _ in range(10)]
+print(keystream)

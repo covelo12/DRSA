@@ -6,8 +6,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 import base64
-
-#Returns the index right after the confusion string and the result are equal
+from Crypto.Cipher import ChaCha20
 def getIndex( confString, result): 
 
     leng= len(confString)
@@ -18,25 +17,21 @@ def getIndex( confString, result):
 
 def getResult(password, confString):
     result=""
-    trys = 1000
-    while (confString not in  result ):
-        trys = trys + 500
-        result = random_gen(password,confString,trys)
-    return result
+    password_bytes = bytes.fromhex(password)
+    rc = ChaCha20.new(key=password_bytes)
+    result=rc.encrypt(password_bytes)
+    while (confString not in  result.hex() ):
+        result = rc.encrypt(result)
+    return result.hex()
 
-def random_gen(pwd,salt,len):
-    #print("password"+ pwd)
-    #print("salt"+ salt)
-    #print(len)
+def random_gen(pwd,salt):
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA1(),
-        length=len,
+        length=32,
         salt=salt.encode("utf-8"),
-        iterations=10,
+        iterations=1000,
     )
-    key = kdf.derive(pwd.encode("utf-"))
-
-    #print("primeiro:", key.hex())
+    key = kdf.derive(pwd.encode("utf-8"))
     return key.hex()
 
 def psgen(password,confString,iterations):
@@ -45,20 +40,10 @@ def psgen(password,confString,iterations):
     confString = confString.encode("utf-8").hex()
     final=""
     result = ""
-
-    result= getResult(password,confString)
-    #print(result) #done 1
-    index=  getIndex(confString, result)
-    #print(index) #done 2
-    final+= result[:index]
-    #print(final) #done 3
-    for(k) in range(1, iterations):   
-        password=random_gen(password, confString,index+len(password))[:int(len(password))]
-        #print(password) done 4
-        result =getResult(password,confString)
-        index= getIndex(confString, result)
-        final= final + result[:index]
-
+    seed= random_gen(password,confString)
+    for(k) in range(0, iterations):
+        result =getResult(seed,confString)
+        final= final + result[-len(result)*2:-len(result)]
     return final
 
 def generate_prime_from_bytes(random_bytes):
@@ -141,7 +126,9 @@ def generate_pem_files(p, q, private_pem_filename="private.pem", public_pem_file
     with open(public_pem_filename, 'wb') as pem_file:
         pem_file.write(public_pem_data)
 
-#random_bytes=psgen("password","nop",1)
+random_bytes=psgen("password","nop",1)
+print("a")
+print(random_bytes)
 #p,q=keygen(random_bytes)
 #
 #generate_pem_files(p,q)
