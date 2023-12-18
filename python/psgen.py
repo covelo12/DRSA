@@ -6,7 +6,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 import base64
-from Crypto.Cipher import ChaCha20
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 def getIndex( confString, result): 
 
     leng= len(confString)
@@ -16,18 +16,22 @@ def getIndex( confString, result):
     return i+leng
 
 def getResult(password, confString):
-    result=""
+    nonce = bytes([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
+    algorithm = algorithms.ChaCha20(b"12345678901234567890123456789012", nonce)
+    cipher = Cipher(algorithm, mode=None)
+    encryptor = cipher.encryptor()
+
+    result = b""  # Initialize as bytes
     password_bytes = bytes.fromhex(password)
-    rc = ChaCha20.new(key=password_bytes)
-    result=rc.encrypt(password_bytes)
-    while (confString not in  result.hex() ):
-        result = rc.encrypt(result)
+    result = encryptor.update(password_bytes)  # Convert password to bytes
+    while confString not in result.hex():
+        result = encryptor.update(result)
     return result.hex()
 
 def random_gen(pwd,salt):
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA1(),
-        length=32,
+        length=256,
         salt=salt.encode("utf-8"),
         iterations=1000,
     )
@@ -43,7 +47,8 @@ def psgen(password,confString,iterations):
     seed= random_gen(password,confString)
     for(k) in range(0, iterations):
         result =getResult(seed,confString)
-        final= final + result[-len(result)*2:-len(result)]
+        final= final + result
+        seed= getResult(result,confString)
     return final
 
 def generate_prime_from_bytes(random_bytes):
@@ -52,7 +57,6 @@ def generate_prime_from_bytes(random_bytes):
         candidate_prime = (candidate_prime << 8) | ord(c)
     if candidate_prime % 2 == 0:
         candidate_prime += 1
-
     while not number.isPrime(candidate_prime):
         candidate_prime += 2
 
@@ -75,7 +79,7 @@ def keygen(keystream):
 
     return p,q
 
-def generate_pem_files(p, q, private_pem_filename="private.pem", public_pem_filename="public.pem"):
+def generate_pem_files(p, q, private_pem_filename="private.pem", public_pem_filename="public.pem"): 
     # Calculate n (modulus)
     n = p * q
 
@@ -126,9 +130,8 @@ def generate_pem_files(p, q, private_pem_filename="private.pem", public_pem_file
     with open(public_pem_filename, 'wb') as pem_file:
         pem_file.write(public_pem_data)
 
-random_bytes=psgen("password","nop",1)
-print("a")
-print(random_bytes)
+#random_bytes=psgen("password","npe",1)
+#print(random_bytes)
 #p,q=keygen(random_bytes)
 #
 #generate_pem_files(p,q)

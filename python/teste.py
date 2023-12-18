@@ -1,20 +1,18 @@
-class StreamCipher:
-    def __init__(self, seed):
-        self.state = seed
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-    # LCG parameters
-    a = 1664525
-    c = 1013904223
-    m = 2**32  # 4294967296
+# Create the nonce
+nonce = bytes([ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,12,13,14,15,16])
 
-    def next_byte(self):
-        # Generate a pseudo-random byte
-        self.state = (self.a * self.state + self.c) % self.m
-        return self.state >> 24  # Return the top 8 bits
+# Define the plaintext and key
+plaintext = b"ricardo"
+key = b"12345678901234567890123456789012"
 
-# Example usage
-cipher = StreamCipher(12345)  # Seed for the generator
-
-# Generate 10 bytes of keystream
-keystream = [cipher.next_byte() for _ in range(10)]
-print(keystream)
+algorithm = algorithms.ChaCha20(key, nonce)
+cipher = Cipher(algorithm, mode=None)
+encryptor = cipher.encryptor()
+ct = encryptor.update(plaintext)
+print(ct.hex())

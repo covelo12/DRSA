@@ -3,9 +3,11 @@ import random
 from psgen import psgen
 import matplotlib.pyplot as plt
 from base64 import b64encode
+import numpy as np
+import sys
 
 def generate_confusion_strings(size_confString, num_iterations):
-    confusionStrings = []
+    iterations = []
     setupTimes = []
 
     for i in range(num_iterations):
@@ -16,17 +18,17 @@ def generate_confusion_strings(size_confString, num_iterations):
         buf_confString = buffer[0:size_confString]
         confString = b64encode(buf_confString).decode('utf-8')
         confString= confString[0:size_confString]
-        iterations = buffer[size_confString]%10
-        if (iterations == 0):
-            iterations = 1
+        iteration = buffer[-size_confString]%10
+        if (iteration == 0):
+            iteration = 1
         #print("Iterations: ", iterations )
         #print("confString: ", confString, "\n")
 
-        elapsedTime, final = time_randgen("password", confString, iterations)
-        setupTimes.append((confString, iterations, elapsedTime))
-        confusionStrings.append(size_confString)  # Collecting the size of confusion strings
+        elapsedTime, final = time_randgen("password", confString, iteration)
+        setupTimes.append( elapsedTime)
+        iterations.append(iteration)
 
-    return confusionStrings, setupTimes ,final
+    return iterations,setupTimes ,final
 
 
 def time_randgen(password, confString, iterations):
@@ -36,42 +38,85 @@ def time_randgen(password, confString, iterations):
     elapsedTime = (endTime - startTime) * 1000  # Convert to milliseconds
     return elapsedTime ,final
 
+def get_average(array):
+    suma = sum(array)
+    leng= len(array)
+    return suma/leng
 
-def start():
-    confusionStrings1, setupTimes1, final = generate_confusion_strings(1, 10)
-    confusionStrings2, setupTimes2,final = generate_confusion_strings(2, 10)
-    confusionStrings3, setupTimes3,final = generate_confusion_strings(3, 10)
+def mesure_speed():
+    iterations1, setupTimes1, final = generate_confusion_strings(1, 10)
+    iterations2, setupTimes2, final = generate_confusion_strings(2, 10)
+    iterations3, setupTimes3, final = generate_confusion_strings(3, 10)
 
-    # Separate data for plotting
-    iterations1 = [iteration for (_, iteration, _) in setupTimes1]
-    elapsedTimes1 = [elapsedTime for (_, _, elapsedTime) in setupTimes1]
+    sizes=[1,2,3]
+    iterations=[1,2,3,4,5,6,7,8,9,10]
+    times_for_sizes=[]
+    times_for_iteraitons=[]
+    for i in range(0,len(iterations)):
+        times_for_iteraitons.append(0)
 
-    iterations2 = [iteration for (_, iteration, _) in setupTimes2]
-    elapsedTimes2 = [elapsedTime for (_, _, elapsedTime) in setupTimes2]
+    times_for_sizes.append(get_average(setupTimes1))
+    times_for_sizes.append(get_average(setupTimes2))
+    times_for_sizes.append(get_average(setupTimes3))
 
-    iterations3 = [iteration for (_, iteration, _) in setupTimes3]
-    elapsedTimes3 = [elapsedTime for (_, _, elapsedTime) in setupTimes3]
 
-    # Plot for iterations vs. elapsed time
-    plt.figure(figsize=(10, 6))
-    plt.xlabel("Iterations")
-    plt.ylabel("Elapsed Time (ms)")
-    plt.title("Elapsed Time vs. Iterations")
-    plt.scatter(iterations1, elapsedTimes1, label="1 Char ConfString")
-    plt.scatter(iterations2, elapsedTimes2, label="2 Char ConfString")
-    plt.scatter(iterations3, elapsedTimes3, label="3 Char ConfString")
-    plt.legend()
-    plt.ylim(0, 2000)
-    plt.savefig("plot_iterations_vs_time.png")
+    for i in range(0, len(iterations3)):
+        times_for_iteraitons[iterations1[i]]+=setupTimes1[i]
+        times_for_iteraitons[iterations2[i]]+=setupTimes2[i]
+        times_for_iteraitons[iterations3[i]]+=setupTimes3[i]
 
-    # Plot for confusion string size vs. elapsed time
-    plt.figure(2)
-    plt.xlabel("Size of ConfString")
-    plt.ylabel("Elapsed Time (ms)")
-    plt.title("Elapsed Time vs. Size of ConfString")
-    plt.scatter(confusionStrings1 + confusionStrings2 + confusionStrings3, elapsedTimes1 + elapsedTimes2 +elapsedTimes3)
-
+    for i in range(0,len(times_for_iteraitons)):
+        times_for_iteraitons[i]=times_for_iteraitons[i]/len(iterations1)
+        times_for_iteraitons[i]=times_for_iteraitons[i]/len(iterations1)
+        times_for_iteraitons[i]=times_for_iteraitons[i]/len(iterations1)
+    # Plotting execution time vs. size of confString
+    plt.figure()
+    plt.plot(sizes, times_for_sizes, marker='o')
+    plt.xlabel('Size of confString')
+    plt.ylabel('Average Execution Time (ms)')
+    plt.title('Execution Time vs. Size of confString')
     plt.savefig("plot_confstring_size_vs_time.png")
+    plt.show()
+    
+    plt.figure()
+    plt.plot(iterations, times_for_iteraitons, marker='o')
+    plt.xlabel('Size of confString')
+    plt.ylabel('Average Execution Time (ms)')
+    plt.title('Execution Time vs. Size of confString')
+    plt.savefig("iterations_vs_time.png")
+    plt.show()
+ 
+def output_bytes():
+    size_confString=random.randint(1,4)
+    size_password=random.randint(1,10)
+    buffer = bytearray(size_confString + 1+size_password)
+    with open("/dev/urandom", "rb") as urandom:
+        urandom.readinto(buffer)
+
+    buf_confString = buffer[0:size_confString]
+    confString = b64encode(buf_confString).decode('utf-8')
+    confString= confString[0:size_confString]
+
+    buf_password = buffer[size_confString:size_password]
+    password = b64encode(buf_password).decode('utf-8')
+    password= confString[0:size_password]
+
+    iteration = buffer[-size_confString]%10
+    if (iteration == 0):
+        iteration = 1
+    #print("Iterations: ", iterations )
+    #print("confString: ", confString, "\n")
+
+    result=psgen(password,confString,iteration)
+    return(result.encode())
 
 if __name__ == "__main__":
-    start()
+    if len(sys.argv) !=2:
+        print("Usage: python randgen.py  <mode: 1->speed_test 2->output_rand>")
+        sys.exit(1)
+    mode = sys.argv[1]
+    if mode == "1":
+        mesure_speed()
+    elif mode == "2":
+        result=output_bytes()
+        sys.stdout.write(result)
