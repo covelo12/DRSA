@@ -8,11 +8,23 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 nonce = bytes([ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,12,13,14,15,16])
 
 # Define the plaintext and key
-plaintext = b"ricardo"
-key = b"12345678901234567890123456789012"
 
-algorithm = algorithms.ChaCha20(key, nonce)
-cipher = Cipher(algorithm, mode=None)
-encryptor = cipher.encryptor()
-ct = encryptor.update(plaintext)
-print(ct.hex())
+def encrypt(data):
+    nonce = bytes([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
+    algorithm = algorithms.ChaCha20(data[:32], nonce)
+    cipher = Cipher(algorithm, mode=None)
+    encryptor = cipher.encryptor()
+    return encryptor.update(data)
+
+plaintext = b"12345678901234567890123456789012"
+
+
+ct = encrypt(plaintext)
+dois=encrypt(ct)
+tres=encrypt(dois)
+quatro=encrypt(tres)
+
+print(ct.hex(),"\n")
+print(dois.hex(),"\n")
+print(tres.hex(),"\n")
+print(quatro.hex(),"\n")

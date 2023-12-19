@@ -4,48 +4,55 @@
 #include <openssl/evp.h>
 #include <iomanip>
 
-std::string string_to_hex_utf8(const std::string& input) {
-    std::ostringstream oss;
-    for (const char& c : input) {
-        oss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(static_cast<unsigned char>(c));
+std::string bytes_to_hex(const std::string &input) {
+    std::string hex_string;
+    for (unsigned char byte : input) {
+        char hex_byte[3];
+        snprintf(hex_byte, sizeof(hex_byte), "%02x", byte);
+        hex_string += hex_byte;
     }
-    return oss.str();
+    return hex_string;
 }
-std::vector<unsigned char> encrypt_chacha20(const std::string &plaintext, const std::string &key) {
-    std::vector<unsigned char> nonce = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,13,14,15,16};
+
+std::string encrypt_chacha20(const std::string &plaintext) {
+    std::string key = plaintext.substr(0,32);
+    if (plaintext.size() < 32) {
+        throw std::invalid_argument("Key must be 32 bytes long");
+    }
+
+    std::vector<unsigned char> nonce = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     EVP_CIPHER_CTX *ctx;
-    std::vector<unsigned char> ciphertext(plaintext.size() + EVP_MAX_BLOCK_LENGTH);
+    std::string ciphertext(plaintext.size(), 0);
     int len;
 
     ctx = EVP_CIPHER_CTX_new();
-    // Pass the nonce to the encryption context
     EVP_EncryptInit_ex(ctx, EVP_chacha20(), nullptr, reinterpret_cast<const unsigned char*>(key.c_str()), nonce.data());
-    
-    EVP_EncryptUpdate(ctx, ciphertext.data(), &len, reinterpret_cast<const unsigned char*>(plaintext.c_str()), plaintext.size());
+
+    EVP_EncryptUpdate(ctx, reinterpret_cast<unsigned char*>(&ciphertext[0]), &len, reinterpret_cast<const unsigned char*>(plaintext.c_str()), plaintext.size());
     int total_len = len;
 
-    EVP_EncryptFinal_ex(ctx, ciphertext.data() + len, &len);
+    EVP_EncryptFinal_ex(ctx, reinterpret_cast<unsigned char*>(&ciphertext[0]) + len, &len);
     total_len += len;
 
-    ciphertext.resize(total_len);
     EVP_CIPHER_CTX_free(ctx);
 
+    // The size of ciphertext should already be equal to plaintext size, so no resize is needed
     return ciphertext;
 }
 
 int main() {
-    std::string plaintext = "ricardo"; // Hex representation of "Attack at dawn. MeCe.M"
-    std::string key = "12345678901234567890123456789012";
+    std::string plaintext = "12345678901234567890123456789012"; // Hex representation of "Attack at dawn. MeCe.M"
+    
 
-    std::vector<unsigned char> ciphertext = encrypt_chacha20(plaintext, key);
+    std::string ciphertext = encrypt_chacha20(plaintext);
+    std::string dois = encrypt_chacha20(ciphertext);
+    std::string tres = encrypt_chacha20(dois);
+    std::string quatro = encrypt_chacha20(tres);
 
-    std::stringstream ss;
-    for (size_t i = 0; i < ciphertext.size(); i++) {
-        ss << std::hex << std::setw(2) << std::setfill('0') << (int)ciphertext[i];
-    }
-    std::string hex_ciphertext = ss.str();
-
-    std::cout << "hex_ciphertext: " << hex_ciphertext << std::endl;
+    printf("cipher %s \n",bytes_to_hex(ciphertext).c_str());
+    printf("cipher %s \n",bytes_to_hex(dois).c_str());
+    printf("cipher %s \n",bytes_to_hex(tres).c_str());
+    printf("cipher %s \n",bytes_to_hex(quatro).c_str());    
 
     return 0;
 }

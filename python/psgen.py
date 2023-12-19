@@ -7,25 +7,19 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 import base64
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-def getIndex( confString, result): 
-
-    leng= len(confString)
-    i = 0
-    while (result[i:i+leng] != confString):
-        i = i + 1
-    return i+leng
-
-def getResult(password, confString):
+def encrypt(data):
     nonce = bytes([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
-    algorithm = algorithms.ChaCha20(b"12345678901234567890123456789012", nonce)
+    algorithm = algorithms.ChaCha20(data[:32], nonce)
     cipher = Cipher(algorithm, mode=None)
     encryptor = cipher.encryptor()
+    return encryptor.update(data)
 
+def getResult(password, confString):
     result = b""  # Initialize as bytes
-    password_bytes = bytes.fromhex(password)
-    result = encryptor.update(password_bytes)  # Convert password to bytes
+    password_bytes = password.encode()
+    result = encrypt(password_bytes)  # Convert password to bytes
     while confString not in result.hex():
-        result = encryptor.update(result)
+        result = encrypt(result)
     return result.hex()
 
 def random_gen(pwd,salt):
@@ -45,9 +39,11 @@ def psgen(password,confString,iterations):
     final=""
     result = ""
     seed= random_gen(password,confString)
+    
     for(k) in range(0, iterations):
         result =getResult(seed,confString)
-        final= final + result
+        
+        final=result
         seed= getResult(result,confString)
     return final
 
