@@ -61,16 +61,11 @@ def generate_prime_from_bytes(random_bytes):
 def keygen(keystream):
     leng=int(len(keystream))
     leng= leng//2
-    #print(leng)
     key1= keystream[:leng]
     key2= keystream[leng:]
-    #print("key 1" + key1 +"\n") #done 1
-    #print("key 2" + key2 + "\n") #done 2
 
     p= generate_prime_from_bytes(key1)
     q= generate_prime_from_bytes(key2)
-    #print("q "+str(q))
-    #print("p "+str(p))
 
 
     return p,q
@@ -86,8 +81,6 @@ def generate_pem_files(p, q, private_pem_filename="private.pem", public_pem_file
     phi = (p - 1) * (q - 1)
     # Calculate the private exponent
     d = pow(e, -1, phi)
-    #print(d)
-
     # Generate the private key
     private_numbers = rsa.RSAPrivateNumbers(
         p=p, q=q, d=d, dmp1=d%(p-1), dmq1=d%(q-1), iqmp=rsa.rsa_crt_iqmp(p, q),

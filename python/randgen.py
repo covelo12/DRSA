@@ -21,8 +21,6 @@ def generate_confusion_strings(size_confString, num_iterations):
         iteration = buffer[-size_confString]%10
         if (iteration == 0):
             iteration = 1
-        #print("Iterations: ", iterations )
-        #print("confString: ", confString, "\n")
 
         elapsedTime, final = time_randgen("password", confString, iteration)
         setupTimes.append( elapsedTime)
@@ -47,8 +45,9 @@ def mesure_speed():
     iterations1, setupTimes1, final = generate_confusion_strings(1, 10)
     iterations2, setupTimes2, final = generate_confusion_strings(2, 10)
     iterations3, setupTimes3, final = generate_confusion_strings(3, 10)
+    iterations4, setupTimes4, final = generate_confusion_strings(4, 10)
 
-    sizes=[1,2,3]
+    sizes=[1,2,3,4]
     iterations=[1,2,3,4,5,6,7,8,9,10]
     times_for_sizes=[]
     times_for_iteraitons=[]
@@ -58,12 +57,14 @@ def mesure_speed():
     times_for_sizes.append(get_average(setupTimes1))
     times_for_sizes.append(get_average(setupTimes2))
     times_for_sizes.append(get_average(setupTimes3))
+    times_for_sizes.append(get_average(setupTimes4))
 
 
     for i in range(0, len(iterations3)):
         times_for_iteraitons[iterations1[i]]+=setupTimes1[i]
         times_for_iteraitons[iterations2[i]]+=setupTimes2[i]
         times_for_iteraitons[iterations3[i]]+=setupTimes3[i]
+        times_for_iteraitons[iterations4[i]]+=setupTimes4[i]
 
     for i in range(0,len(times_for_iteraitons)):
         times_for_iteraitons[i]=times_for_iteraitons[i]/len(iterations1)
@@ -104,8 +105,7 @@ def output_bytes():
     iteration = buffer[-size_confString]%10
     if (iteration == 0):
         iteration = 1
-    #print("Iterations: ", iterations )
-    #print("confString: ", confString, "\n")
+        
 
     result=psgen(password,confString,iteration)
     return(result.encode())
@@ -119,4 +119,4 @@ if __name__ == "__main__":
         mesure_speed()
     elif mode == "2":
         result=output_bytes()
-        sys.stdout.write(result)
+        sys.stdout.write(result.decode())

@@ -3,7 +3,6 @@ import sys
 import random
 
 def start(bytes):
-    print(bytes)
     p,q=keygen(bytes.hex())
     generate_pem_files(p,q)
 
@@ -14,5 +13,5 @@ if __name__ == "__main__":
     elif len(sys.argv) == 2:
         start(sys.argv[1].encode())
     else: 
-        start(random.randbytes(64))
+        start(random.randbytes(256))
 

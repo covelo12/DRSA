@@ -1,4 +1,3 @@
-// Todo testar em VM
 
 #include <iostream>
 #include <string>
@@ -99,19 +98,7 @@ string randgen(string password, string confString, int iterations){
     return final;
 }
 
-int psgen() {
-    int iterations;
-    string password, confString;
-    //cin >> password;
-    //cin >> confString;
-    //cin >> iterations;
-
-    
+std::string psgen(std::string password, std::string confString, int iterations) {    
     string final  = randgen(password, confString, iterations);
-    
-    //printf("final: %s \n",final.c_str()); //done 4
-    //keygen(final);
-
-    return 0;
+    return final;
 }
-

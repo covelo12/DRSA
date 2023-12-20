@@ -1,76 +1,121 @@
 #include <iostream>
-#include <fstream>
-#include <chrono>
-#include <cstring>
 #include <vector>
-#include <openssl/des.h>
-#include <openssl/rand.h>
-#include <openssl/evp.h>
-#include <openssl/pem.h>
-#include <openssl/err.h>
+#include <chrono>
+#include <random>
 #include "psgen.cpp"
-#include <iostream>
-#include <chrono>
-#include <vector>
+#include <fstream>
+// Other necessary includes
 
-using namespace std;
+// Function declarations
+void generate_confusion_strings(int size_confString, int num_iterations, std::vector<int>& iterations, std::vector<double>& setupTimes, std::string& final);
+double time_randgen(std::string password,std::string confString, int iterations);
+double get_average(const std::vector<double>& array);
+void mesure_speed();
+std::vector<uint8_t> output_bytes();
 
-vector<string> confusionStrings;
-vector<int> numIterations;  
-vector<chrono::duration<double, milli>> setupTime;
-
-void timeRandgen(string password, string confString, int iterations) {
-  auto startTime = chrono::high_resolution_clock::now();
-
-  string final = randgen(password, confString, iterations);
-
-  auto endTime = chrono::high_resolution_clock::now();
-  chrono::duration<double, milli> elapsedTime = endTime - startTime;
-
-  // Add the setup time to the setupTime vector
-  setupTime.push_back(elapsedTime);
-}
-
-
-int main() {
-  // Measure the setup time for different confusion strings and number of iterations
-  confusionStrings.push_back("aa");
-  confusionStrings.push_back("d");
-  confusionStrings.push_back("n");
-  confusionStrings.push_back("nop");
-
-  numIterations.push_back(1);
-  numIterations.push_back(2);
-  numIterations.push_back(3);
-
-  int k=0;
-  for (int i = 0; i < confusionStrings.size(); i++) {
-    for (int j = 0; j < numIterations.size(); j++) {
-      k++;
-      timeRandgen("password", confusionStrings[i], numIterations[j]);
-      printf("iteration %d done, Iterations: %d  and ConfString %s \n", k  , numIterations[j], confusionStrings[i].c_str());
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cout << "Usage: ./randgen <mode: 1->speed_test 2->output_rand>\n";
+        return 1;
     }
-  }
-  // Generate a scatter plot of the setup time vs. confusion string and number of iterations
-  cout << "Generating scatter plot..." << endl;
-  for (int i = 0; i < confusionStrings.size(); i++) {
-    cout << confusionStrings[i] << ": " << setupTime[i].count() << endl;
-  }
 
-  // Increment the setup time by the number of iterations
-for (int i = 0; i < setupTime.size(); i++) {
-    setupTime[i] += chrono::duration<double, milli>(numIterations[i]);
+    try {
+        int mode = std::stoi(argv[1]);
+        if (mode == 1) {
+            mesure_speed();
+        } else if (mode == 2) {
+            auto result = output_bytes();
+            // Output result
+            for (auto byte : result) {
+                std::cout << byte;
+            }
+            std::cout << std::endl;
+        }
+    } catch (const std::invalid_argument& ia) {
+        std::cerr << "Invalid argument: " << ia.what() << '\n';
+        return 1;
+    } catch (const std::out_of_range& oor) {
+        std::cerr << "Argument out of range: " << oor.what() << '\n';
+        return 1;
+    }
+
+    return 0;
 }
 
-  // Sort the setup time and confusionStrings vectors by their respective values
-  sort(setupTime.begin(), setupTime.end());
-  sort(confusionStrings.begin(), confusionStrings.end());
+double time_randgen(std::string password,std::string confString, int iterations) {
+    auto startTime = std::chrono::high_resolution_clock::now();
 
-  // Create a line chart with the setup time vs. confusion string
-  cout << "Creating line chart..." << endl;
-  for (int i = 0; i < setupTime.size(); i++) {
-    cout << confusionStrings[i] << ": " << setupTime[i].count() << endl;
-  }
+    std::string final = psgen(password,confString,iterations); 
+    auto endTime = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> elapsedTime = endTime - startTime;
 
-  return 0;
+    return elapsedTime.count();
 }
+
+void generate_confusion_strings(int size_confString, int num_iterations, std::vector<int>& iterations, std::vector<double>& setupTimes, std::string& final) {
+    std::ifstream urandom("/dev/urandom", std::ios::in | std::ios::binary);
+    if (!urandom) {
+        std::cerr << "Failed to open /dev/urandom" << std::endl;
+        return;
+    }
+
+    for (int i = 0; i < num_iterations; ++i) {
+        std::vector<char> buffer(size_confString + 1);
+        if (!urandom.read(buffer.data(), buffer.size())) {
+            std::cerr << "Failed to read from /dev/urandom" << std::endl;
+            break;
+        }
+
+        std::string confString(buffer.begin(), buffer.end() - 1);
+        int iteration = buffer.back() % 10;
+        if (iteration == 0) iteration = 1;
+
+        double elapsedTime = time_randgen("password", confString, iteration);
+        setupTimes.push_back(elapsedTime);
+        iterations.push_back(iteration);
+    }
+
+    urandom.close();
+    final = "Some final value"; // Replace with actual final value logic if needed
+}
+
+double get_average(const std::vector<double>& array) {
+    double sum = std::accumulate(array.begin(), array.end(), 0.0);
+    return sum / array.size();
+}
+
+std::vector<uint8_t> output_bytes() {
+    std::ifstream urandom("/dev/urandom", std::ios::in | std::ios::binary);
+    if (!urandom) {
+        std::cerr << "Failed to open /dev/urandom" << std::endl;
+        return {};
+    }
+
+    std::random_device rd;
+    std::uniform_int_distribution<> size_dist(1, 4);
+    std::uniform_int_distribution<> password_size_dist(1, 10);
+
+    int size_confString = size_dist(rd);
+    int size_password = password_size_dist(rd);
+
+    std::vector<uint8_t> buffer(size_confString + 1 + size_password);
+    if (!urandom.read(reinterpret_cast<char*>(buffer.data()), buffer.size())) {
+        std::cerr << "Failed to read from /dev/urandom" << std::endl;
+        return {};
+    }
+
+    urandom.close();
+
+    std::string confString(buffer.begin(), buffer.begin() + size_confString);
+    std::string password(buffer.begin() + size_confString, buffer.begin() + size_confString + size_password);
+
+    int iteration = buffer.back() % 10;
+    if (iteration == 0) iteration = 1;
+
+    
+    std::string result = psgen(password, confString, iteration);
+    return std::vector<uint8_t>(result.begin(), result.end());
+
+}
+
+
