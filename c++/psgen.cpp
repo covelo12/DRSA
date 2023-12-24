@@ -68,8 +68,6 @@ string PBKDF2(string password, string salt) {
         ss << hex << setw(2) << setfill('0') << (int)key[i];
     
     string s =ss.str();
-
-    //printf("Primeira %s                               !!!!", s.c_str());
     return s;
 }
 string getResult(string password, string confString) {
@@ -83,21 +81,18 @@ string getResult(string password, string confString) {
         comp_result = bytes_to_hex(result);
     }
 
-    return bytes_to_hex(result);
+    return result;
 }
 string randgen(string password, string confString, int iterations){
     string final = "", result = "";
     std::string seed=PBKDF2(password,confString);
-    
     for (int k = 0; k < iterations; k++) {
         result = getResult(seed,confString);
-        
         final= result;
         seed= getResult(result,confString);
     }
-    return final;
+    return bytes_to_hex(final);
 }
-
 std::string psgen(std::string password, std::string confString, int iterations) {    
     string final  = randgen(password, confString, iterations);
     return final;

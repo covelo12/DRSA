@@ -16,11 +16,10 @@ def encrypt(data):
 
 def getResult(password, confString):
     result = b""  # Initialize as bytes
-    password_bytes = password.encode()
-    result = encrypt(password_bytes)  # Convert password to bytes
+    result = encrypt(password)  # Convert password to bytes
     while confString not in result.hex():
         result = encrypt(result)
-    return result.hex()
+    return result
 
 def random_gen(pwd,salt):
     kdf = PBKDF2HMAC(
@@ -29,7 +28,7 @@ def random_gen(pwd,salt):
         salt=salt.encode("utf-8"),
         iterations=1000,
     )
-    key = kdf.derive(pwd.encode("utf-8"))
+    key = kdf.derive(pwd)
     return key.hex()
 
 def psgen(password,confString,iterations):
@@ -38,14 +37,13 @@ def psgen(password,confString,iterations):
     confString = confString.encode("utf-8").hex()
     final=""
     result = ""
-    seed= random_gen(password,confString)
-    
+    seed= random_gen(password.encode("utf-8"),confString)
+    seed=seed.encode()
     for(k) in range(0, iterations):
         result =getResult(seed,confString)
-        
         final=result
         seed= getResult(result,confString)
-    return final
+    return final.hex()
 
 def generate_prime_from_bytes(random_bytes):
     candidate_prime = 0
@@ -71,57 +69,35 @@ def keygen(keystream):
     return p,q
 
 def generate_pem_files(p, q, private_pem_filename="private.pem", public_pem_filename="public.pem"): 
-    # Calculate n (modulus)
     n = p * q
-
-    # Public exponent
     e = pow(2,16) + 1
-
-    # Calculate phi(n)
     phi = (p - 1) * (q - 1)
-    # Calculate the private exponent
     d = pow(e, -1, phi)
-    # Generate the private key
     private_numbers = rsa.RSAPrivateNumbers(
         p=p, q=q, d=d, dmp1=d%(p-1), dmq1=d%(q-1), iqmp=rsa.rsa_crt_iqmp(p, q),
         public_numbers=rsa.RSAPublicNumbers(e=e, n=n)
     )
-
     integer_bytes = e.to_bytes((e.bit_length() + 7) // 8, byteorder='big')
     encoded_bytes = base64.b64encode(integer_bytes)
     encoded_string = encoded_bytes.decode('utf-8')
-
-
-
     private_key = private_numbers.private_key(default_backend())
 
-    # Serialize the private key to PEM format
     private_pem_data = private_key.private_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PrivateFormat.TraditionalOpenSSL,
         encryption_algorithm=serialization.NoEncryption()
     )
 
-    # Write the private PEM data to a file
     with open(private_pem_filename, 'wb') as pem_file:
         pem_file.write(private_pem_data)
 
-    # Get the public key from the private key
     public_key = private_key.public_key()
 
-    # Serialize the public key to PEM format
     public_pem_data = public_key.public_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo
     )
-
     # Write the public PEM data to a file
     with open(public_pem_filename, 'wb') as pem_file:
         pem_file.write(public_pem_data)
-
-#random_bytes=psgen("password","npe",1)
-#print(random_bytes)
-#p,q=keygen(random_bytes)
-#
-#generate_pem_files(p,q)
 

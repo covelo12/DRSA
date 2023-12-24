@@ -42,10 +42,10 @@ def get_average(array):
     return suma/leng
 
 def mesure_speed():
-    iterations1, setupTimes1, final = generate_confusion_strings(1, 10)
-    iterations2, setupTimes2, final = generate_confusion_strings(2, 10)
-    iterations3, setupTimes3, final = generate_confusion_strings(3, 10)
-    iterations4, setupTimes4, final = generate_confusion_strings(4, 10)
+    iterations1, setupTimes1, final = generate_confusion_strings(1, 50)
+    iterations2, setupTimes2, final = generate_confusion_strings(2, 50)
+    iterations3, setupTimes3, final = generate_confusion_strings(3, 50)
+    iterations4, setupTimes4, final = generate_confusion_strings(4, 50)
 
     sizes=[1,2,3,4]
     iterations=[1,2,3,4,5,6,7,8,9,10]
@@ -70,6 +70,7 @@ def mesure_speed():
         times_for_iteraitons[i]=times_for_iteraitons[i]/len(iterations1)
         times_for_iteraitons[i]=times_for_iteraitons[i]/len(iterations1)
         times_for_iteraitons[i]=times_for_iteraitons[i]/len(iterations1)
+        
     # Plotting execution time vs. size of confString
     plt.figure()
     plt.plot(sizes, times_for_sizes, marker='o')
@@ -81,9 +82,9 @@ def mesure_speed():
     
     plt.figure()
     plt.plot(iterations, times_for_iteraitons, marker='o')
-    plt.xlabel('Size of confString')
+    plt.xlabel('Number of Iterations')
     plt.ylabel('Average Execution Time (ms)')
-    plt.title('Execution Time vs. Size of confString')
+    plt.title('Execution Time vs. Number of Iterations')
     plt.savefig("iterations_vs_time.png")
     plt.show()
  
